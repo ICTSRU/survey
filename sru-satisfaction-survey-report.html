@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير نتائج استبيان رضا المنسوبين - ICTD v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --purple:#501e8c; --purple-dark:#3a1464; --purple-light:#f0ebf8;
+    --blue:#0a6eaa; --blue-light:#e6f3fa;
+    --green:#1a7f4b; --green-light:#e6f6ee;
+    --amber:#b5750a; --amber-light:#fdf3e3;
+    --red:#b1272c; --red-light:#f5eef0;
+    --bg:#f7f5fb; --ink:#241436; --muted:#6b5a80;
+    --border:rgba(80,30,140,0.12); --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Cairo',Tahoma,Arial,sans-serif;}
+  .sru-en{unicode-bidi:isolate;direction:ltr;display:inline-block;}
+  .topbar{background:var(--purple-dark);color:#fff;padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .topbar-title strong{font-size:20px;display:block;}
+  .topbar-title span{font-size:12.5px;color:#d9c9f2;font-weight:500;}
+  .ver-badge{display:inline-block;margin-top:6px;background:rgba(255,255,255,.15);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.3px;}
+  .container{max-width:1200px;margin:0 auto;padding:24px 20px 60px;}
+
+  .filter-bar{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:22px;}
+  .filter-bar .field{display:flex;flex-direction:column;gap:4px;min-width:170px;}
+  .filter-bar label{font-size:11.5px;color:var(--muted);font-weight:700;}
+  .filter-bar select{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;background:#fff;color:var(--ink);}
+  .filter-bar select:focus{outline:none;border-color:var(--purple);}
+  .filter-reset{margin-inline-start:auto;background:#fff;border:1px solid var(--purple);color:var(--purple);border-radius:6px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+  .filter-reset:hover{background:var(--purple-light);}
+  #filterNote{width:100%;font-size:12px;color:var(--muted);}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px;}
+  .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;inset-inline-end:0;top:0;bottom:0;width:4px;background:var(--blue);}
+  .kpi.total::before{background:var(--purple);}
+  .kpi .num{font-size:30px;font-weight:900;color:var(--purple-dark);}
+  .kpi.total .num{color:var(--purple);}
+  .kpi .lbl{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px;}
+  .kpi .sub{font-size:10.5px;color:var(--muted);margin-top:4px;}
+
+  h2.section-title{font-size:16px;color:var(--purple-dark);margin:30px 0 4px;border-bottom:2px solid var(--border);padding-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .diag{display:inline-block;width:10px;height:10px;background:var(--blue);transform:rotate(45deg);flex:none;}
+  p.section-note{font-size:12.5px;color:var(--muted);margin:6px 0 16px;}
+
+  .panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;}
+  .two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+  @media (max-width:820px){ .two-col{grid-template-columns:1fr;} }
+  .chart-wrap{position:relative;height:300px;}
+  .chart-wrap.short{height:230px;}
+
+  .legend-list{display:flex;flex-direction:column;gap:8px;justify-content:center;}
+  .legend-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
+  .legend-dot{width:11px;height:11px;border-radius:3px;flex:none;}
+  .legend-row .cnt{margin-inline-start:auto;font-weight:800;color:var(--purple-dark);}
+
+  .comments-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:820px){ .comments-grid{grid-template-columns:1fr;} }
+  .comment-list{display:flex;flex-direction:column;gap:10px;}
+  .comment-item{background:var(--bg);border-inline-start:3px solid var(--blue);border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.7;white-space:pre-line;}
+  .comment-item.improve{border-inline-start-color:var(--amber);}
+  .comment-empty{color:var(--muted);font-size:13px;padding:14px;text-align:center;}
+
+  .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .badge{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;}
+  .badge.green{background:var(--green-light);color:var(--green);}
+  .badge.amber{background:var(--amber-light);color:var(--amber);}
+  .badge.red{background:var(--red-light);color:var(--red);}
+  .badge.blue{background:var(--blue-light);color:var(--blue);}
+  .badge.purple{background:var(--purple-light);color:var(--purple);}
+
+  footer{text-align:center;font-size:11.5px;color:var(--muted);padding:24px 20px;}
+  @media print{
+    .no-print{display:none!important;}
+    body{background:#fff;}
+    .panel,.kpi{break-inside:avoid;}
+  }
+  .print-btn{background:#fff;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+  .print-btn:hover{background:rgba(255,255,255,.12);}
+  .insight-list{display:flex;flex-direction:column;gap:10px;}
+  .insight-item{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.8;}
+  .insight-badge{flex:none;width:22px;height:22px;border-radius:50%;background:var(--purple);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+  .insight-badge.warn{background:var(--amber);}
+  .insight-badge.ok{background:var(--green);}
+  .rec-card{background:var(--bg);border-inline-start:3px solid var(--purple);border-radius:6px;padding:12px 14px;margin-bottom:10px;}
+  .rec-card .rec-title{font-weight:800;color:var(--purple-dark);font-size:13.5px;margin-bottom:4px;}
+  .rec-card .rec-score{font-size:11.5px;color:var(--red);font-weight:700;}
+  .rec-card .rec-text{font-size:13px;color:var(--ink);margin-top:4px;line-height:1.7;}
+  table.plan-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.plan-table th{background:var(--purple-light);color:var(--purple-dark);text-align:right;padding:9px 10px;font-weight:800;border-bottom:1px solid var(--border);}
+  table.plan-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  .priority{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;}
+  .priority.high{background:var(--red-light);color:var(--red);}
+  .priority.med{background:var(--amber-light);color:var(--amber);}
+  .priority.low{background:var(--green-light);color:var(--green);}
+  canvas{cursor:pointer;}
+  .kpi{cursor:default;}
+  .click-hint{font-size:11px;color:var(--muted);margin-top:-2px;margin-bottom:10px;}
+  .drilldown{background:var(--purple-light);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-top:12px;display:none;}
+  .drilldown.show{display:block;}
+  .drilldown-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .drilldown-head strong{font-size:13.5px;color:var(--purple-dark);}
+  .drilldown-close{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;}
+  .drilldown-close:hover{color:var(--red);}
+  .dist-row{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:5px;}
+  .dist-row .star{width:52px;flex:none;font-weight:700;color:var(--muted);}
+  .dist-track{flex:1;background:#fff;border-radius:20px;height:14px;overflow:hidden;}
+  .dist-fill{height:100%;background:var(--purple);border-radius:20px;}
+  .dist-row .cnt{width:28px;text-align:left;font-weight:800;color:var(--purple-dark);}
+  .active-filter-chip{display:inline-flex;align-items:center;gap:6px;background:var(--purple);color:#fff;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;margin-top:10px;}
+  .active-filter-chip button{background:none;border:none;color:#fff;cursor:pointer;font-size:13px;line-height:1;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">
+    <strong>تقرير نتائج استبيان رضا المنسوبين</strong>
+    <span>الإدارة التنفيذية للاتصالات وتقنية المعلومات - جامعة سليمان الراجحي</span>
+    <span class="ver-badge">ICTD-SRV-SAT-01 · v2.0</span>
+  </div>
+  <button class="print-btn no-print" onclick="window.print()">طباعة / تصدير PDF</button>
+</div>
+
+<div class="container">
+
+  <div class="filter-bar no-print">
+    <div class="field">
+      <label>الفئة</label>
+      <select id="f_category"><option value="">الكل</option></select>
+    </div>
+    <div class="field">
+      <label>مدة التعامل مع تقنية المعلومات</label>
+      <select id="f_tenure"><option value="">الكل</option></select>
+    </div>
+    <div class="field">
+      <label>عدد مرات التواصل</label>
+      <select id="f_freq"><option value="">الكل</option></select>
+    </div>
+    <button class="filter-reset" id="resetBtn">إعادة تعيين الفلاتر</button>
+    <div id="filterNote"></div>
+  </div>
+
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <h2 class="section-title"><span class="diag"></span> المحور العام - الرضا الإجمالي (G1–G5)</h2>
+  <p class="section-note">متوسط كل بند من 5. اضغط أي عمود أو سطر في القائمة أدناه لعرض توزيع الإجابات.</p>
+  <div class="panel">
+    <div class="chart-wrap"><canvas id="chartG"></canvas></div>
+    <div class="legend-list" id="legendG" style="margin-top:14px;"></div>
+    <div class="drilldown" id="drillG"></div>
+  </div>
+
+  <h2 class="section-title"><span class="diag"></span> تقييم الخدمات (S1–S8)</h2>
+  <p class="section-note">مرتبة من الأقل إلى الأعلى لإبراز مجالات التحسين ذات الأولوية. اضغط أي عمود أو سطر في القائمة لعرض توزيع الإجابات.</p>
+  <div class="panel">
+    <div class="chart-wrap"><canvas id="chartS"></canvas></div>
+    <div class="legend-list" id="legendS" style="margin-top:14px;"></div>
+    <div class="drilldown" id="drillS"></div>
+  </div>
+
+  <h2 class="section-title"><span class="diag"></span> معالجة الشكاوى والمقترحات (C1–C5)</h2>
+  <p class="section-note">اضغط أي عمود أو سطر في القائمة لعرض توزيع الإجابات.</p>
+  <div class="panel">
+    <div class="chart-wrap short"><canvas id="chartC"></canvas></div>
+    <div class="legend-list" id="legendC" style="margin-top:14px;"></div>
+    <div class="drilldown" id="drillC"></div>
+  </div>
+
+  <h2 class="section-title"><span class="diag"></span> صافي نقاط الترويج (NPS) وحالة الشكاوى</h2>
+  <div class="two-col">
+    <div class="panel">
+      <div class="chart-wrap short"><canvas id="chartNps"></canvas></div>
+      <div class="badge-row" id="npsBadges"></div>
+    </div>
+    <div class="panel">
+      <div class="chart-wrap" style="height:300px;"><canvas id="chartFiled"></canvas></div>
+    </div>
+  </div>
+
+  <h2 class="section-title"><span class="diag"></span> قناة التواصل المستخدمة</h2>
+  <p class="section-note">اضغط أي عمود لتصفية التقرير حسب قناة التواصل.</p>
+  <div class="panel"><div class="chart-wrap short"><canvas id="chartChannel"></canvas></div></div>
+
+  <h2 class="section-title"><span class="diag"></span> التركيبة الديمغرافية للمشاركين</h2>
+  <p class="section-note">اضغط أي عمود أو قطاع لتصفية كامل التقرير حسب تلك الفئة.</p>
+  <div class="two-col">
+    <div class="panel"><div class="chart-wrap short"><canvas id="chartCategory"></canvas></div></div>
+    <div class="panel"><div class="chart-wrap short"><canvas id="chartTenure"></canvas></div></div>
+  </div>
+
+  <h2 class="section-title"><span class="diag"></span> الملاحظات المفتوحة</h2>
+  <p class="section-note">آراء المشاركين كما وردت حرفيًا، لأغراض المراجعة والتحليل النوعي.</p>
+  <div class="comments-grid">
+    <div class="panel">
+      <strong style="font-size:13px;color:var(--green);">✓ أبرز الإيجابيات</strong>
+      <div class="comment-list" id="positiveList" style="margin-top:10px;"></div>
+    </div>
+    <div class="panel">
+      <strong style="font-size:13px;color:var(--amber);">↑ مقترحات التحسين</strong>
+      <div class="comment-list" id="improveList" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <h2 class="section-title"><span class="diag"></span> المشاهدات الرئيسية</h2>
+  <p class="section-note">تُحتسب تلقائيًا من البيانات المعروضة حاليًا (تتأثر بالفلاتر أعلاه).</p>
+  <div class="panel"><div class="insight-list" id="observationsList"></div></div>
+
+  <h2 class="section-title"><span class="diag"></span> التوصيات</h2>
+  <p class="section-note">مبنية على أضعف 3 عبارات تقييم في البيانات الحالية.</p>
+  <div class="panel" id="recommendationsPanel"></div>
+
+  <h2 class="section-title"><span class="diag"></span> خطة العمل المقترحة</h2>
+  <div class="panel">
+    <div class="table-scroll">
+      <table class="plan-table">
+        <thead><tr><th>الإجراء المقترح</th><th>الأولوية</th><th>الجهة المسؤولة المقترحة</th><th>الإطار الزمني المقترح</th></tr></thead>
+        <tbody id="actionPlanBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>تقرير ICTD-SRV-SAT-01 · تم إنشاؤه تلقائيًا من نتائج استبيان رضا المنسوبين · جامعة سليمان الراجحي</footer>
+</div>
+
+<script>
+const RAW = [{"timestamp": "2026-09-16T07:43:25.258Z", "q_category": "موظف إداري", "q_unit": "إدارة تقنية المعلومات", "q_tenure": "4 – 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 3.0, "g2": 4.0, "g3": 5.0, "g4": 4.0, "g5": 4.0, "s1": 5.0, "s2": 3.0, "s3": 4.0, "s4": 5.0, "s5": 5.0, "s6": 4.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 4.0, "c4": 5.0, "c5": 4.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 8.0, "q_positive": "تنوع الخدمات", "q_improve": "مزيد من الجلسات التعليميه", "q_email": null}, {"timestamp": "2026-09-16T09:12:05.634Z", "q_category": "عضو هيئة تدريس", "q_unit": "إدارة تقنية المعلومات", "q_tenure": "4 – 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 4.0, "g2": 3.0, "g3": 4.0, "g4": 4.0, "g5": 5.0, "s1": 4.0, "s2": 4.0, "s3": 4.0, "s4": 4.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 4.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 9.0, "q_positive": "سرعة الأستجابة", "q_improve": "تحديث الموقع الألكتروني", "q_email": null}, {"timestamp": "2026-09-16T09:44:08.606Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية الطب", "q_tenure": "أقل من سنة", "q_freq": "1 – 2 مرة", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 3.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 4.0, "s6": 5.0, "s7": 5.0, "s8": 4.0, "c1": 5.0, "c2": 4.0, "c3": 5.0, "c4": 5.0, "c5": 3.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T09:50:54.425Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية التمريض", "q_tenure": "1 – 3 سنوات", "q_freq": "3 – 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 3.0, "g5": 5.0, "s1": 1.0, "s2": 0.0, "s3": 0.0, "s4": 5.0, "s5": 0.0, "s6": 5.0, "s7": 5.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "الزيارة المباشرة", "q_nps": 10.0, "q_positive": "بصفتي طالب في كلية التمريض ، وكانت الكثير من محاضراتي السنة الماضية عبر تقنية الفصول الافتراضية VCR ، كان اي خلل او مشكلة تواجهنا كطلاب منسوبي تقنية المعلومات يتعاملون مع المشكلة بكل جدية ويحلونها مهما كانت معقدة ، والأهم من هذا كله أن القسم كامل تعاملهم معنا كطلاب في قمة من الإحترافية المهنية والرقي في الأخلاق  لهم منا جزيل الشكر والتقدير", "q_improve": "امل الإطلاع على شبكة الإنترنت بالجامعة حيث انه من المستحيل ان يكمل يوم دراسي واحد دون ان يفصل عدة مرات وفي كل مرة تحتاج إلى ان تغير كلمة السر الخاصة بالبوابة الاكاديمية ليعمل الإنترنت   كذلك وجود تعليق في البوابة الاكاديمية حيث انه كل فترة بسيطة شهر او شهر ونصف تضطر ان تغير كلمة السر حتى يدخلك للبوابة", "q_email": "251110852@sr.edu.sa"}, {"timestamp": "2026-09-16T09:52:40.564Z", "q_category": "موظف إداري", "q_unit": "إدارة الاتصال المؤسسي", "q_tenure": "4 – 6 سنوات", "q_freq": null, "g1": 3.0, "g2": 4.0, "g3": 4.0, "g4": 5.0, "g5": 2.0, "s1": 2.0, "s2": 3.0, "s3": 3.0, "s4": 0.0, "s5": 1.0, "s6": 3.0, "s7": 5.0, "s8": 3.0, "c1": 4.0, "c2": 2.0, "c3": 3.0, "c4": 4.0, "c5": 2.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 6.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T09:52:54.435Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية العلوم التطبيقية", "q_tenure": "أقل من سنة", "q_freq": "3 – 5 مرات", "g1": 5.0, "g2": 4.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 3.0, "s2": 3.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 3.0, "s7": 5.0, "s8": 5.0, "c1": 0.0, "c2": 3.0, "c3": 3.0, "c4": 3.0, "c5": 3.0, "q_filed": "لا", "q_channel": "واتساب / الرسائل", "q_nps": 10.0, "q_positive": "E- learning online", "q_improve": "The quality of audio", "q_email": null}, {"timestamp": "2026-09-16T09:53:46.108Z", "q_category": "موظف إداري", "q_unit": "إدارة المسؤولية المجتمعية", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 5.0, "s4": 5.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "الهاتف / التحويلة", "q_nps": 10.0, "q_positive": "التعاون الفوري", "q_improve": "توفير دورات تدريبية للتعامل مع الأنظمة تسكين بناء الأنظمة وتقليل الاعتماد على الأطراف الخارجية لتسريع التطوير والتحديث", "q_email": "a.alsakaker@se.edu.sa"}, {"timestamp": "2026-09-16T09:53:46.518Z", "q_category": "موظف إداري", "q_unit": "الإدارة التنفيذية للاتصالات وتقنية المعلومات", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T09:56:36.021Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 4.0, "g2": 4.0, "g3": 4.0, "g4": 4.0, "g5": 4.0, "s1": 4.0, "s2": 4.0, "s3": 3.0, "s4": 4.0, "s5": 4.0, "s6": 4.0, "s7": 4.0, "s8": 4.0, "c1": 5.0, "c2": 4.0, "c3": 5.0, "c4": 5.0, "c5": 4.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "الهاتف / التحويلة", "q_nps": 8.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T09:57:15.309Z", "q_category": "موظف إداري", "q_unit": "مكتب القبول", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T09:58:13.841Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية العلوم التطبيقية", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": "ma.alreshidi@sr.edu.sa"}, {"timestamp": "2026-09-16T10:00:44.499Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية الطب", "q_tenure": "4 – 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 3.0, "g2": 4.0, "g3": 4.0, "g4": 1.0, "g5": 3.0, "s1": 1.0, "s2": 4.0, "s3": 3.0, "s4": 3.0, "s5": 4.0, "s6": 2.0, "s7": 5.0, "s8": 3.0, "c1": 1.0, "c2": 2.0, "c3": 4.0, "c4": 4.0, "c5": 1.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 2.0, "q_positive": "سرعة الاستجابة حين التواصل عبر البريد الإلكتروني", "q_improve": "الانترنت سيء جدا في السكن والجامعة ولا يوجد شبكة حتى للاتصال الهاتفي في بعض مرافق الجامعة مثل المعامل والمختبرات وفي معظم غرف السكن", "q_email": null}, {"timestamp": "2026-09-16T10:01:53.544Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية الأعمال", "q_tenure": "أقل من سنة", "q_freq": "1 – 2 مرة", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": "سرعة الرد وحل المشكلات", "q_improve": "التركيز على الإيميل في نشر المعلومات وإيصالها حتى لا يتسبب ذاك في تشتيت الطلاب من ماحية كثره المنصات", "q_email": null}, {"timestamp": "2026-09-16T10:03:42.924Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 4.0, "g2": 4.0, "g3": 5.0, "g4": 4.0, "g5": 4.0, "s1": 4.0, "s2": 5.0, "s3": 4.0, "s4": 4.0, "s5": 4.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 4.0, "c5": 0.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 9.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T10:04:17.890Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الطب", "q_tenure": "أكثر من 6 سنوات", "q_freq": "1 – 2 مرة", "g1": 3.0, "g2": 2.0, "g3": 1.0, "g4": 2.0, "g5": 2.0, "s1": 1.0, "s2": 2.0, "s3": 0.0, "s4": 3.0, "s5": 2.0, "s6": 3.0, "s7": 0.0, "s8": 0.0, "c1": 3.0, "c2": 4.0, "c3": 2.0, "c4": 3.0, "c5": 4.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 8.0, "q_positive": null, "q_improve": "اصلاح وشرح استخدام الطابعات اصلاح المصاعد بشكل نهائي توفير سرعات انترنت أفضل توفير ممافذ Ethernet", "q_email": "261110620@srcolleges.org"}, {"timestamp": "2026-09-16T10:04:55.234Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية التمريض", "q_tenure": "أقل من سنة", "q_freq": "أكثر من 5 مرات", "g1": 4.0, "g2": 5.0, "g3": 4.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 3.0, "s3": 4.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 4.0, "c2": 3.0, "c3": 3.0, "c4": 3.0, "c5": 4.0, "q_filed": "لا", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 7.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T10:09:47.069Z", "q_category": "موظف إداري", "q_unit": "الإدارة التنفيذية للاتصالات وتقنية المعلومات", "q_tenure": "4 – 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 10.0, "q_positive": "مكتب الدعم الفني وسرعة الإستجابة", "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T10:11:49.949Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 0.0, "s3": 5.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 10.0, "q_positive": "الدعم الفني وجوجل شات", "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T10:13:09.897Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 10.0, "q_positive": "مكتب الدعم الفني", "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T10:36:43.384Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الطب", "q_tenure": null, "q_freq": null, "g1": 3.0, "g2": 3.0, "g3": 4.0, "g4": 5.0, "g5": 3.0, "s1": 1.0, "s2": 3.0, "s3": 3.0, "s4": 3.0, "s5": 3.0, "s6": 5.0, "s7": 4.0, "s8": 4.0, "c1": 3.0, "c2": 4.0, "c3": 4.0, "c4": 3.0, "c5": 4.0, "q_filed": null, "q_channel": null, "q_nps": 3.0, "q_positive": null, "q_improve": "اتمنى تقوية النت لان النت سيء جدًا", "q_email": null}, {"timestamp": "2026-09-16T10:45:47.526Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الأعمال", "q_tenure": "أقل من سنة", "q_freq": "أكثر من 5 مرات", "g1": 3.0, "g2": 4.0, "g3": 5.0, "g4": 3.0, "g5": 2.0, "s1": 2.0, "s2": 0.0, "s3": 0.0, "s4": 5.0, "s5": 3.0, "s6": 5.0, "s7": 4.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 3.0, "c4": 5.0, "c5": 0.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": null, "q_improve": "تحسين سرعة انترنت سكن الطلاب ومقر الجامعة", "q_email": "261110091@srcolleges.org"}, {"timestamp": "2026-09-16T10:50:32.221Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية العلوم التطبيقية", "q_tenure": "أقل من سنة", "q_freq": "لم أستخدمها", "g1": 3.0, "g2": 1.0, "g3": 3.0, "g4": 3.0, "g5": 5.0, "s1": 5.0, "s2": 1.0, "s3": 5.0, "s4": 1.0, "s5": 1.0, "s6": 4.0, "s7": 5.0, "s8": 1.0, "c1": 4.0, "c2": 1.0, "c3": 3.0, "c4": 2.0, "c5": 4.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 5.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T11:14:58.579Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 10.0, "q_positive": "سهولة التواصل وسرعة الاستجابة ..يتميز  فريق تقنية المعلومات بمنتهي الاحترافية وحسن التعامل", "q_improve": "لا يوجد", "q_email": "f.mustafa@sr.edu.sa"}, {"timestamp": "2026-09-16T11:16:40.119Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الأعمال", "q_tenure": "أقل من سنة", "q_freq": "أكثر من 5 مرات", "g1": 3.0, "g2": 3.0, "g3": 3.0, "g4": 3.0, "g5": 3.0, "s1": 1.0, "s2": 0.0, "s3": 4.0, "s4": 1.0, "s5": 3.0, "s6": 5.0, "s7": 0.0, "s8": 4.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "لا", "q_channel": "الزيارة المباشرة", "q_nps": 8.0, "q_positive": null, "q_improve": "تحسين شبكة الانترنت في سكن الطلاب، تحسين اوقات تردد باصات سكن الطلاب لطلاب كلية الاعمال تحديدا", "q_email": null}, {"timestamp": "2026-09-16T11:29:01.700Z", "q_category": "موظف إداري", "q_unit": "مكتب رئيس الجامعة", "q_tenure": "أقل من سنة", "q_freq": "1 – 2 مرة", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 4.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T12:04:46.309Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية الطب", "q_tenure": "4 – 6 سنوات", "q_freq": "1 – 2 مرة", "g1": 4.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 5.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 5.0, "c2": 5.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 9.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T12:12:30.243Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الأعمال", "q_tenure": "أقل من سنة", "q_freq": "1 – 2 مرة", "g1": 1.0, "g2": 1.0, "g3": 2.0, "g4": 1.0, "g5": 1.0, "s1": 1.0, "s2": 1.0, "s3": 1.0, "s4": 1.0, "s5": 2.0, "s6": 3.0, "s7": 2.0, "s8": 1.0, "c1": 1.0, "c2": 1.0, "c3": 2.0, "c4": 2.0, "c5": 2.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 2.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T12:39:31.878Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 0.0, "c2": 0.0, "c3": 0.0, "c4": 0.0, "c5": 0.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 8.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T13:09:29.429Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 1.0, "g2": 1.0, "g3": 3.0, "g4": 3.0, "g5": 1.0, "s1": 1.0, "s2": 1.0, "s3": 1.0, "s4": 1.0, "s5": 3.0, "s6": 3.0, "s7": 3.0, "s8": 1.0, "c1": 2.0, "c2": 1.0, "c3": 1.0, "c4": 1.0, "c5": 3.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 0.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T13:25:28.262Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الأعمال", "q_tenure": "أقل من سنة", "q_freq": "1 – 2 مرة", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T14:17:58.048Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الأعمال", "q_tenure": "أقل من سنة", "q_freq": "لم أستخدمها", "g1": 3.0, "g2": 3.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 1.0, "s6": 5.0, "s7": 3.0, "s8": 5.0, "c1": 3.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 3.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "البريد الإلكتروني", "q_nps": 9.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T14:19:14.620Z", "q_category": "عضو هيئة تدريس", "q_unit": "طالبات كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "3 – 5 مرات", "g1": 4.0, "g2": 4.0, "g3": 2.0, "g4": 4.0, "g5": 4.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 2.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "واتساب / الرسائل", "q_nps": 9.0, "q_positive": "Efficient", "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T14:32:52.338Z", "q_category": "عضو هيئة تدريس", "q_unit": "مكتب البحث العلمي", "q_tenure": "أقل من سنة", "q_freq": "1 – 2 مرة", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 5.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T16:02:27.497Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 0.0, "s4": 5.0, "s5": 5.0, "s6": 4.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "الهاتف / التحويلة", "q_nps": 10.0, "q_positive": "سرعة الاستجابة", "q_improve": "تضمين الذكاء الاصطناعي في بعض المهام", "q_email": "a.adam@sr.edu.sa"}, {"timestamp": "2026-09-16T16:22:35.475Z", "q_category": "عضو هيئة تدريس", "q_unit": "إدارة التميز المؤسسي", "q_tenure": "أقل من سنة", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 4.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "الزيارة المباشرة", "q_nps": 8.0, "q_positive": "الاخبار العاجلة", "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T19:45:54.658Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الطب", "q_tenure": "4 – 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 2.0, "g2": 2.0, "g3": 2.0, "g4": 2.0, "g5": 2.0, "s1": 1.0, "s2": 1.0, "s3": 3.0, "s4": 3.0, "s5": 3.0, "s6": 0.0, "s7": 3.0, "s8": 3.0, "c1": 3.0, "c2": 1.0, "c3": 1.0, "c4": 1.0, "c5": 2.0, "q_filed": "نعم — ولم تُعالج بشكل كافٍ", "q_channel": "البريد الإلكتروني", "q_nps": 3.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T21:18:32.604Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية التمريض", "q_tenure": "1 – 3 سنوات", "q_freq": "1 – 2 مرة", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 5.0, "s2": 5.0, "s3": 5.0, "s4": 5.0, "s5": 5.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 8.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-16T23:03:49.125Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "3 – 5 مرات", "g1": 4.0, "g2": 4.0, "g3": 4.0, "g4": 4.0, "g5": 4.0, "s1": 1.0, "s2": 3.0, "s3": 3.0, "s4": 4.0, "s5": 4.0, "s6": 4.0, "s7": 4.0, "s8": 4.0, "c1": 3.0, "c2": 4.0, "c3": 4.0, "c4": 4.0, "c5": 3.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 6.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-17T03:10:50.649Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية الطب", "q_tenure": null, "q_freq": null, "g1": 3.0, "g2": 2.0, "g3": 3.0, "g4": 4.0, "g5": 2.0, "s1": 2.0, "s2": 3.0, "s3": 3.0, "s4": 3.0, "s5": 2.0, "s6": 4.0, "s7": 4.0, "s8": 1.0, "c1": 3.0, "c2": 3.0, "c3": 3.0, "c4": 3.0, "c5": 3.0, "q_filed": "لا", "q_channel": null, "q_nps": 2.0, "q_positive": "التغطية الواسعة لشبكة الانترنت وتوفر الطابعات في أرجاء الجامعة", "q_improve": "تسهيل استخدام الخدمات الطلابية مثل الطابعات وإرشاد الطلاب لكيفية تشغيلها والاستفادة منها ووضع لافتات إرشادية. تقوية شبكة الإنترنت لأننا نضطر للاستغناء عنه وتشغيل بياناتنا الخاصة معظم الوقت.", "q_email": "261110171@srcolleges.org"}, {"timestamp": "2026-09-17T03:19:18.875Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية العلوم التطبيقية", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 0.0, "s2": 0.0, "s3": 0.0, "s4": 0.0, "s5": 0.0, "s6": 0.0, "s7": 0.0, "s8": 0.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "البريد الإلكتروني", "q_nps": 10.0, "q_positive": null, "q_improve": null, "q_email": "251130047@srcolleges.org"}, {"timestamp": "2026-09-17T04:36:41.814Z", "q_category": "طالب / طالبة", "q_unit": "طلاب كلية العلوم التطبيقية", "q_tenure": null, "q_freq": "3 – 5 مرات", "g1": 3.0, "g2": 2.0, "g3": 4.0, "g4": 4.0, "g5": 3.0, "s1": 1.0, "s2": 4.0, "s3": 4.0, "s4": 4.0, "s5": 4.0, "s6": 5.0, "s7": 5.0, "s8": 3.0, "c1": 3.0, "c2": 3.0, "c3": 4.0, "c4": 4.0, "c5": 4.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "واتساب / الرسائل", "q_nps": 6.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-17T08:06:18.362Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية التمريض", "q_tenure": "أقل من سنة", "q_freq": "لم أستخدمها", "g1": 5.0, "g2": 5.0, "g3": 5.0, "g4": 5.0, "g5": 5.0, "s1": 4.0, "s2": 5.0, "s3": 5.0, "s4": 4.0, "s5": 4.0, "s6": 5.0, "s7": 5.0, "s8": 5.0, "c1": 5.0, "c2": 5.0, "c3": 5.0, "c4": 5.0, "c5": 5.0, "q_filed": "لا", "q_channel": "واتساب / الرسائل", "q_nps": 9.0, "q_positive": ".", "q_improve": ".", "q_email": "261210829@srcolleges.org"}, {"timestamp": "2026-09-17T08:28:34.103Z", "q_category": "عضو هيئة تدريس", "q_unit": "كلية الطب", "q_tenure": "أكثر من 6 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 4.0, "g2": 4.0, "g3": 4.0, "g4": 4.0, "g5": 4.0, "s1": 2.0, "s2": 4.0, "s3": 4.0, "s4": 3.0, "s5": 2.0, "s6": 3.0, "s7": 4.0, "s8": 4.0, "c1": 4.0, "c2": 4.0, "c3": 4.0, "c4": 4.0, "c5": 4.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "نظام الدعم الفني (ServiceDesk)", "q_nps": 7.0, "q_positive": null, "q_improve": null, "q_email": null}, {"timestamp": "2026-09-17T08:37:33.121Z", "q_category": "طالب / طالبة", "q_unit": "طالبات كلية الطب", "q_tenure": "1 – 3 سنوات", "q_freq": "أكثر من 5 مرات", "g1": 4.0, "g2": 4.0, "g3": 3.0, "g4": 4.0, "g5": 4.0, "s1": 1.0, "s2": 4.0, "s3": 4.0, "s4": 4.0, "s5": 2.0, "s6": 5.0, "s7": 5.0, "s8": 4.0, "c1": 5.0, "c2": 4.0, "c3": 3.0, "c4": 3.0, "c5": 3.0, "q_filed": "نعم — وتمت معالجتها", "q_channel": "البريد الإلكتروني", "q_nps": 6.0, "q_positive": "تقدم الخدمات بشكل ممتاز جدا ويوجد دعم جاهز لحل المشكلات", "q_improve": "سرعة الإنترنت في سكن الطلاب ضعيفة جدا وتصل إلى أقل من ميغا في الثانية", "q_email": null}];
+
+const G_KEYS = ['g1','g2','g3','g4','g5'];
+const S_KEYS = ['s1','s2','s3','s4','s5','s6','s7','s8'];
+const C_KEYS = ['c1','c2','c3','c4','c5'];
+const ALL_LIKERT = [...G_KEYS, ...S_KEYS, ...C_KEYS];
+
+// توصية مقترحة وجهة مسؤولة مقترحة لكل عبارة تقييم — تُستخدم في قسمي التوصيات وخطة العمل عند ظهور العبارة ضمن الأضعف
+const ITEM_RECOMMENDATIONS = {
+  g1:'مراجعة أولويات الخدمات المقدَّمة دوريًا مع أصحاب المصلحة لضمان اتساقها مع احتياجات المستفيدين الفعلية.',
+  g2:'تبسيط نقاط الوصول للخدمات التقنية (دليل موحّد للقنوات المتاحة) وتقليل عدد الخطوات للوصول للدعم.',
+  g3:'الاستمرار في برامج التدريب السلوكي والمهني لمنسوبي تقنية المعلومات، مع تكريم الأداء المتميز.',
+  g4:'توحيد قناة نشر الإعلانات والتعاميم التقنية (نشرة دورية واحدة) بدلًا من تعدد القنوات المشتتة.',
+  g5:'قياس الأثر التشغيلي للخدمات التقنية على إنتاجية المستفيدين وربطه بخطط التطوير القادمة.',
+  s1:'إجراء مسح فني شامل لتغطية الشبكة اللاسلكية في السكن والمرافق التعليمية، ورفع سرعة الإنترنت في المناطق ذات الكثافة العالية.',
+  s2:'مراجعة أوقات الاستجابة في مكتب الخدمة (ServiceDesk) ووضع مؤشرات SLA أوضح للمتابعة الدورية.',
+  s3:'تبسيط إجراءات الأنظمة الإدارية والمالية وتقليل عدد الموافقات المطلوبة للمعاملات المتكررة.',
+  s4:'تحسين استقرار الأنظمة الأكاديمية وقت الذروة (بداية الفصل، فترات التسجيل) عبر مراجعة السعة التشغيلية.',
+  s5:'تنظيم جلسات توعوية دورية حول استخدام Gmail وMicrosoft 365 لرفع كفاءة الاستخدام لدى المنسوبين.',
+  s6:'صيانة دورية استباقية لتجهيزات القاعات السمعية والبصرية قبل بداية كل فصل دراسي.',
+  s7:'الاستمرار في حملات التوعية بالأمن السيبراني مع تحديثها لتواكب التهديدات المستجدة.',
+  s8:'تحديث الموقع الإلكتروني وتحسين تجربة الخدمة الذاتية بناءً على ملاحظات المستخدمين.',
+  c1:'إبراز قنوات تقديم الشكاوى والمقترحات بشكل أوضح في جميع نقاط التواصل الرقمية.',
+  c2:'وضع حد زمني معياري للاستجابة الأولية على البلاغات ومتابعة الالتزام به.',
+  c3:'مراجعة جودة الحلول النهائية المقدَّمة عبر عينة دورية من البلاغات المغلقة.',
+  c4:'تفعيل إشعارات تلقائية لإبلاغ مقدّم البلاغ بحالة طلبه حتى إغلاقه نهائيًا.',
+  c5:'إنشاء آلية رسمية لتقييم المقترحات التطويرية الواردة والرد على مقدّميها بالقرار المتخذ.'
+};
+
+// الجهة المسؤولة المقترحة لكل عبارة
+const ITEM_DEPT = {
+  g1:'الإدارة التنفيذية للاتصالات وتقنية المعلومات', g2:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',
+  g3:'الإدارة التنفيذية للاتصالات وتقنية المعلومات', g4:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',
+  g5:'الإدارة التنفيذية للاتصالات وتقنية المعلومات',
+  s1:'إدارة الشبكات والبنية التحتية', s2:'مكتب الدعم الفني (ServiceDesk)', s3:'إدارة الأنظمة الإدارية والمالية',
+  s4:'إدارة الأنظمة الأكاديمية', s5:'إدارة تقنية المعلومات', s6:'الدعم الفني للقاعات التدريسية',
+  s7:'إدارة الأمن السيبراني', s8:'إدارة الموقع الإلكتروني والخدمات الذاتية',
+  c1:'مكتب الدعم الفني (ServiceDesk)', c2:'مكتب الدعم الفني (ServiceDesk)', c3:'مكتب الدعم الفني (ServiceDesk)',
+  c4:'مكتب الدعم الفني (ServiceDesk)', c5:'الإدارة التنفيذية للاتصالات وتقنية المعلومات'
+};
+
+// نص الأسئلة الكامل كما ورد في نموذج الاستبيان المنشور (ICTD-SRV-SAT-01)
+const ITEM_LABELS = {
+  g1:'الرضا العام عن خدمات الإدارة التنفيذية للاتصالات وتقنية المعلومات',
+  g2:'سهولة الوصول إلى الخدمات التقنية وقنوات الدعم',
+  g3:'احترافية وتعاون منسوبي تقنية المعلومات',
+  g4:'وضوح الإعلانات والتعاميم الصادرة عن الإدارة',
+  g5:'مساهمة الخدمات التقنية في رفع كفاءة عملي/دراستي',
+  s1:'الشبكة والإنترنت (السلكي واللاسلكي)',
+  s2:'الدعم الفني ومكتب الخدمة (ServiceDesk)',
+  s3:'الأنظمة الإدارية والمالية',
+  s4:'الأنظمة الأكاديمية وخدمات الطلاب',
+  s5:'البريد الإلكتروني Gmail وخدمات Microsoft 365',
+  s6:'قاعات التدريس والتجهيزات السمعية والبصرية',
+  s7:'الأمن السيبراني وحماية البيانات والتوعية',
+  s8:'الموقع الإلكتروني والخدمات الذاتية',
+  c1:'سهولة تقديم الشكوى أو المقترح عبر القنوات المتاحة',
+  c2:'سرعة الاستجابة الأولية للبلاغ',
+  c3:'جودة الحل النهائي المقدَّم',
+  c4:'إبلاغي بحالة الطلب ومتابعته حتى الإغلاق',
+  c5:'الجدية في دراسة المقترحات التطويرية والأخذ بها'
+};
+
+const PALETTE = ['#501e8c','#0a6eaa','#1a7f4b','#b5750a','#b1272c','#7a4bb8','#3a8fbf','#8c5a1e'];
+
+let filtered = RAW.slice();
+let charts = {};
+let extraFilter = null; // {key, value, label} set by clicking a demographic/channel bar
+
+function mean(vals){ return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0; }
+// يستبعد "لا ينطبق" (المُرمَّزة كـ 0) من كل الحسابات — بنفس منطق لوحة المؤشرات الرسمية (ICTD-DSH-SAT-01)
+function likertVals(arr){ return arr.filter(v=>v!=null && v>=1 && v<=5); }
+function round1(n){ return Math.round(n*10)/10; }
+
+function populateFilterOptions(){
+  const cats = Array.from(new Set(RAW.map(r=>r.q_category).filter(Boolean)));
+  const tenures = Array.from(new Set(RAW.map(r=>r.q_tenure).filter(Boolean)));
+  const freqs = Array.from(new Set(RAW.map(r=>r.q_freq).filter(Boolean)));
+  const fill = (id, arr) => {
+    const sel = document.getElementById(id);
+    arr.forEach(v => { const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o); });
+  };
+  fill('f_category', cats);
+  fill('f_tenure', tenures);
+  fill('f_freq', freqs);
+}
+
+function applyFilters(){
+  const cat = document.getElementById('f_category').value;
+  const ten = document.getElementById('f_tenure').value;
+  const freq = document.getElementById('f_freq').value;
+  filtered = RAW.filter(r =>
+    (!cat || r.q_category === cat) &&
+    (!ten || r.q_tenure === ten) &&
+    (!freq || r.q_freq === freq) &&
+    (!extraFilter || r[extraFilter.key] === extraFilter.value)
+  );
+  const noteParts = [];
+  if(cat||ten||freq) noteParts.push(`الفلاتر: ${filtered.length} من أصل ${RAW.length} ردًا`);
+  document.getElementById('filterNote').innerHTML = noteParts.join(' · ') +
+    (extraFilter ? `<span class="active-filter-chip">${esc(extraFilter.label)}: ${esc(extraFilter.value)}<button onclick="clearExtraFilter()">✕</button></span>` : '');
+  renderAll();
+}
+
+function setExtraFilter(key, value, label){
+  extraFilter = { key, value, label };
+  applyFilters();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function clearExtraFilter(){
+  extraFilter = null;
+  applyFilters();
+}
+
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+function renderKpis(){
+  const n = filtered.length;
+  const overallVals = likertVals(filtered.flatMap(r => ALL_LIKERT.map(k=>r[k])));
+  const overallMean = round1(mean(overallVals));
+  const csat = overallVals.length ? Math.round(100*overallVals.filter(v=>v>=4).length/overallVals.length) : 0;
+  const npsVals = filtered.map(r=>r.q_nps).filter(v=>v!=null);
+  const prom = npsVals.filter(v=>v>=9).length;
+  const det = npsVals.filter(v=>v<=6).length;
+  const nps = npsVals.length ? Math.round(100*(prom-det)/npsVals.length) : 0;
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi total"><div class="num">${n}</div><div class="lbl">عدد الردود</div></div>
+    <div class="kpi"><div class="num">${overallMean}<span style="font-size:16px;opacity:.6">/5</span></div><div class="lbl">متوسط الرضا العام</div></div>
+    <div class="kpi"><div class="num">${csat}%</div><div class="lbl">نسبة الرضا (CSAT)</div><div class="sub">نسبة التقييمات 4 و5 من 5</div></div>
+    <div class="kpi"><div class="num">${nps}</div><div class="lbl">صافي نقاط الترويج (NPS)</div><div class="sub">من -100 إلى +100</div></div>
+  `;
+}
+
+function itemMeans(keys){
+  return keys.map(k => round1(mean(likertVals(filtered.map(r=>r[k])))));
+}
+
+function renderBarAxis(canvasId, keys, color, sortAsc){
+  let orderedKeys = keys.slice();
+  let data = itemMeans(keys);
+  if(sortAsc){
+    const combined = keys.map((k,i)=>({k, v:data[i]})).sort((a,b)=>a.v-b.v);
+    orderedKeys = combined.map(c=>c.k);
+    data = combined.map(c=>c.v);
+  }
+  const codeLabels = orderedKeys.map(k=>k.toUpperCase());
+  destroyChart(canvasId);
+  const drillId = 'drill' + canvasId.replace('chart','');
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels: codeLabels, datasets:[{ data, backgroundColor: color, borderRadius:5, maxBarThickness:46 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      onClick:(evt, els)=>{
+        if(!els.length) return;
+        showItemDrilldown(drillId, orderedKeys[els[0].index], ITEM_LABELS[orderedKeys[els[0].index]], color);
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{
+          title:(items)=> ITEM_LABELS[orderedKeys[items[0].dataIndex]],
+          label:(ctx)=>` المتوسط: ${ctx.raw} / 5`
+        } }
+      },
+      scales:{ x:{min:0,max:5, grid:{color:'rgba(80,30,140,0.08)'}}, y:{grid:{display:false}} }
+    }
+  });
+  renderAxisLegend(canvasId, orderedKeys, data, color);
+}
+
+// يعرض نص السؤال الكامل تحت كل جراف، مرتبطًا برمز البند في المحور
+function renderAxisLegend(canvasId, orderedKeys, data, color){
+  const legendId = 'legend' + canvasId.replace('chart','');
+  const el = document.getElementById(legendId);
+  if(!el) return;
+  el.innerHTML = orderedKeys.map((k,i)=>`
+    <div class="legend-row" onclick="showItemDrilldown('drill${canvasId.replace('chart','')}', '${k}', ${JSON.stringify(ITEM_LABELS[k])}, '${color}')" style="cursor:pointer;">
+      <span class="legend-dot" style="background:${color}"></span>
+      <span><b class="sru-en">${k.toUpperCase()}</b> — ${esc(ITEM_LABELS[k])}</span>
+      <span class="cnt">${data[i]}/5</span>
+    </div>`).join('');
+}
+
+// يعرض توزيع الإجابات (1-5) لبند معيّن عند الضغط على عموده في الجراف
+function showItemDrilldown(containerId, itemKey, itemLabel, color){
+  const el = document.getElementById(containerId);
+  const vals = likertVals(filtered.map(r=>r[itemKey]));
+  const n = vals.length;
+  const avg = round1(mean(vals));
+  let rowsHtml = '';
+  for(let star=5; star>=1; star--){
+    const count = vals.filter(v=>v===star).length;
+    const pct = n ? Math.round((count/n)*100) : 0;
+    rowsHtml += `<div class="dist-row"><span class="star">${star} / 5</span><div class="dist-track"><div class="dist-fill" style="width:${pct}%;background:${color}"></div></div><span class="cnt">${count}</span></div>`;
+  }
+  el.innerHTML = `<div class="drilldown-head"><strong>${esc(itemLabel)} — المتوسط ${avg}/5 (${n} ردًا)</strong><button class="drilldown-close" onclick="document.getElementById('${containerId}').classList.remove('show')">إغلاق ✕</button></div>${rowsHtml}`;
+  el.classList.add('show');
+}
+
+function renderNpsChart(){
+  const npsVals = filtered.map(r=>r.q_nps).filter(v=>v!=null);
+  const prom = npsVals.filter(v=>v>=9).length;
+  const pass = npsVals.filter(v=>v>=7 && v<=8).length;
+  const det = npsVals.filter(v=>v<=6).length;
+  destroyChart('chartNps');
+  charts['chartNps'] = new Chart(document.getElementById('chartNps'), {
+    type:'doughnut',
+    data:{ labels:['مروّجون (9-10)','محايدون (7-8)','منتقدون (0-6)'],
+      datasets:[{ data:[prom,pass,det], backgroundColor:['#1a7f4b','#b5750a','#b1272c'] }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{family:'Cairo'}}}} }
+  });
+  document.getElementById('npsBadges').innerHTML = `
+    <span class="badge green">مروّجون: ${prom}</span>
+    <span class="badge amber">محايدون: ${pass}</span>
+    <span class="badge red">منتقدون: ${det}</span>`;
+}
+
+function countBy(key){
+  const map = {};
+  filtered.forEach(r=>{ const v=r[key]; if(v==null) return; map[v]=(map[v]||0)+1; });
+  return map;
+}
+
+function renderDoughnut(canvasId, key, filterLabel){
+  const map = countBy(key);
+  const labels = Object.keys(map);
+  const data = Object.values(map);
+  const total = data.reduce((a,b)=>a+b,0);
+  destroyChart(canvasId);
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor: PALETTE }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          position:'bottom',
+          labels:{
+            font:{family:'Cairo', size:11}, boxWidth:10, padding:10,
+            generateLabels:(chart)=> chart.data.labels.map((l,i)=>{
+              const v = chart.data.datasets[0].data[i];
+              const pct = total ? Math.round((v/total)*100) : 0;
+              return {
+                text: `${l} — ${v} (${pct}%)`,
+                fillStyle: PALETTE[i % PALETTE.length],
+                strokeStyle: PALETTE[i % PALETTE.length],
+                index: i
+              };
+            })
+          }
+        },
+        tooltip:{ callbacks:{ label:(ctx)=>{ const v=ctx.raw; const pct= total? Math.round((v/total)*100):0; return ` ${ctx.label}: ${v} (${pct}%)`; } } }
+      },
+      onClick: filterLabel ? (evt, els)=>{ if(!els.length) return; setExtraFilter(key, labels[els[0].index], filterLabel); } : undefined
+    }
+  });
+}
+
+function renderBarCategory(canvasId, key, filterLabel){
+  const map = countBy(key);
+  const labels = Object.keys(map);
+  destroyChart(canvasId);
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels, datasets:[{ data:Object.values(map), backgroundColor:'#0a6eaa', borderRadius:5, maxBarThickness:50 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{beginAtZero:true, ticks:{precision:0}} },
+      onClick: filterLabel ? (evt, els)=>{ if(!els.length) return; setExtraFilter(key, labels[els[0].index], filterLabel); } : undefined
+    }
+  });
+}
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderComments(){
+  const pos = filtered.map(r=>r.q_positive).filter(Boolean);
+  const imp = filtered.map(r=>r.q_improve).filter(Boolean);
+  const posEl = document.getElementById('positiveList');
+  const impEl = document.getElementById('improveList');
+  posEl.innerHTML = pos.length ? pos.map(t=>`<div class="comment-item">${esc(t)}</div>`).join('') : `<div class="comment-empty">لا توجد ملاحظات ضمن الفلاتر الحالية</div>`;
+  impEl.innerHTML = imp.length ? imp.map(t=>`<div class="comment-item improve">${esc(t)}</div>`).join('') : `<div class="comment-empty">لا توجد مقترحات ضمن الفلاتر الحالية</div>`;
+}
+
+// يحسب أضعف 3 عبارات ويولّد المشاهدات والتوصيات وخطة العمل تلقائيًا من البيانات المعروضة حاليًا
+function renderInsights(){
+  const obsEl = document.getElementById('observationsList');
+  const recEl = document.getElementById('recommendationsPanel');
+  const planEl = document.getElementById('actionPlanBody');
+  if(!obsEl) return;
+
+  const n = filtered.length;
+  if(n === 0){
+    obsEl.innerHTML = `<div class="comment-empty">لا توجد بيانات كافية ضمن الفلاتر الحالية لعرض المشاهدات.</div>`;
+    recEl.innerHTML = '';
+    planEl.innerHTML = '';
+    return;
+  }
+
+  // متوسط كل عبارة عبر المحاور الثلاثة معًا
+  const itemMeansAll = {};
+  ALL_LIKERT.forEach(k=>{
+    const vals = likertVals(filtered.map(r=>r[k]));
+    if(vals.length) itemMeansAll[k] = mean(vals);
+  });
+  const ranked = Object.entries(itemMeansAll).sort((a,b)=>a[1]-b[1]);
+  const weakest = ranked.slice(0,3);
+  const strongest = ranked.slice(-1)[0];
+
+  const overallVals = likertVals(filtered.flatMap(r => ALL_LIKERT.map(k=>r[k])));
+  const overallMean = round1(mean(overallVals));
+
+  const filedCounts = countBy('q_filed');
+  const notHandled = filedCounts['نعم — ولم تُعالج بشكل كافٍ'] || 0;
+  const filedTotal = Object.values(filedCounts).reduce((a,b)=>a+b,0);
+
+  const npsVals = filtered.map(r=>r.q_nps).filter(v=>v!=null);
+  const detractors = npsVals.filter(v=>v<=6).length;
+
+  // ---- المشاهدات ----
+  let obsHtml = '';
+  obsHtml += `<div class="insight-item"><span class="insight-badge">${n}</span><span>إجمالي الردود المشمولة بالتحليل الحالي، بمتوسط رضا عام <b>${overallMean}/5</b>.</span></div>`;
+  if(strongest) obsHtml += `<div class="insight-item"><span class="insight-badge ok">✓</span><span>أعلى العبارات تقييمًا: <b>${esc(ITEM_LABELS[strongest[0]])}</b> بمتوسط ${round1(strongest[1])}/5.</span></div>`;
+  weakest.forEach(([k,v])=>{
+    obsHtml += `<div class="insight-item"><span class="insight-badge warn">!</span><span>أضعف العبارات: <b>${esc(ITEM_LABELS[k])}</b> بمتوسط ${round1(v)}/5 — فرصة تحسين ذات أولوية.</span></div>`;
+  });
+  if(filedTotal > 0){
+    const pct = Math.round((notHandled/filedTotal)*100);
+    obsHtml += `<div class="insight-item"><span class="insight-badge ${notHandled>0?'warn':'ok'}">${notHandled}</span><span>من أصل ${filedTotal} ردًا ذكروا تقديم بلاغ سابق، ${notHandled} (${pct}%) اعتبروا أن بلاغهم لم يُعالج بشكل كافٍ.</span></div>`;
+  }
+  if(npsVals.length > 0){
+    obsHtml += `<div class="insight-item"><span class="insight-badge ${detractors>0?'warn':'ok'}">${detractors}</span><span>${detractors} من أصل ${npsVals.length} من المشاركين في مؤشر التوصية (NPS) هم من فئة "منتقدون" (0-6).</span></div>`;
+  }
+  obsEl.innerHTML = obsHtml;
+
+  // ---- التوصيات ----
+  recEl.innerHTML = weakest.map(([k,v])=>`
+    <div class="rec-card">
+      <div class="rec-title">${esc(ITEM_LABELS[k])} <span class="rec-score">(${round1(v)}/5)</span></div>
+      <div class="rec-text">${esc(ITEM_RECOMMENDATIONS[k] || 'يُنصح بمراجعة هذا الجانب ضمن خطة التحسين القادمة.')}</div>
+    </div>`).join('');
+
+  // ---- خطة العمل المقترحة ----
+  function priorityOf(v){ return v < 3.5 ? {cls:'high', label:'عالية', days:'30 يومًا'} : v < 4 ? {cls:'med', label:'متوسطة', days:'90 يومًا'} : {cls:'low', label:'منخفضة', days:'180 يومًا'}; }
+  planEl.innerHTML = weakest.map(([k,v])=>{
+    const p = priorityOf(v);
+    return `<tr>
+      <td>${esc(ITEM_RECOMMENDATIONS[k] || '—')}</td>
+      <td><span class="priority ${p.cls}">${p.label}</span></td>
+      <td>${esc(ITEM_DEPT[k] || 'الإدارة التنفيذية للاتصالات وتقنية المعلومات')}</td>
+      <td>${p.days}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAll(){
+  document.querySelectorAll('.drilldown').forEach(el=>el.classList.remove('show'));
+  renderKpis();
+  renderInsights();
+  renderBarAxis('chartG', G_KEYS, '#501e8c', false);
+  renderBarAxis('chartS', S_KEYS, '#0a6eaa', true);
+  renderBarAxis('chartC', C_KEYS, '#1a7f4b', false);
+  renderNpsChart();
+  renderDoughnut('chartFiled', 'q_filed', 'حالة الشكوى');
+  renderBarCategory('chartChannel', 'q_channel', 'قناة التواصل');
+  renderBarCategory('chartCategory', 'q_category', 'الفئة');
+  renderBarCategory('chartTenure', 'q_tenure', 'مدة التعامل');
+  renderComments();
+}
+
+document.getElementById('f_category').addEventListener('change', applyFilters);
+document.getElementById('f_tenure').addEventListener('change', applyFilters);
+document.getElementById('f_freq').addEventListener('change', applyFilters);
+document.getElementById('resetBtn').addEventListener('click', function(){
+  document.getElementById('f_category').value='';
+  document.getElementById('f_tenure').value='';
+  document.getElementById('f_freq').value='';
+  extraFilter = null;
+  applyFilters();
+});
+
+populateFilterOptions();
+renderAll();
+</script>
+</body>
+</html>
