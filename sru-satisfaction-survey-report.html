@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تقرير نتائج استبيان رضا المنسوبين - ICTD v2.2</title>
+<title>تقرير نتائج استبيان رضا المنسوبين - ICTD v2.3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -36,13 +36,13 @@
   #filterNote{width:100%;font-size:12px;color:var(--muted);}
 
   .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px;}
-  .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;}
+  .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 22px 16px 20px;position:relative;overflow:hidden;}
   .kpi::before{content:'';position:absolute;inset-inline-end:0;top:0;bottom:0;width:4px;background:var(--blue);}
   .kpi.total::before{background:var(--purple);}
-  .kpi .num{font-size:30px;font-weight:900;color:var(--purple-dark);}
+  .kpi .num{font-size:30px;font-weight:900;color:var(--purple-dark);position:relative;z-index:1;}
   .kpi.total .num{color:var(--purple);}
-  .kpi .lbl{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px;}
-  .kpi .sub{font-size:10.5px;color:var(--muted);margin-top:4px;}
+  .kpi .lbl{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px;position:relative;z-index:1;}
+  .kpi .sub{font-size:10.5px;color:var(--muted);margin-top:4px;position:relative;z-index:1;}
 
   h2.section-title{font-size:16px;color:var(--purple-dark);margin:30px 0 4px;border-bottom:2px solid var(--border);padding-bottom:10px;display:flex;align-items:center;gap:8px;}
   .diag{display:inline-block;width:10px;height:10px;background:var(--blue);transform:rotate(45deg);flex:none;}
@@ -130,7 +130,7 @@
   <div class="topbar-title">
     <strong>تقرير نتائج استبيان رضا المنسوبين</strong>
     <span>الإدارة التنفيذية للاتصالات وتقنية المعلومات - جامعة سليمان الراجحي</span>
-    <span class="ver-badge">ICTD-SRV-SAT-01 · v2.2</span>
+    <span class="ver-badge">ICTD-SRV-SAT-01 · v2.3</span>
   </div>
   <button class="print-btn no-print" onclick="window.print()">طباعة / تصدير PDF</button>
 </div>
